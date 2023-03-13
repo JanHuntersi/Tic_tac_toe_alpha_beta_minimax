@@ -4,13 +4,9 @@ from itertools import cycle
 from tkinter import font
 from typing import NamedTuple
 import copy
-from testing import get_position_ai
+from tkinter import ttk
 
-class Move(NamedTuple):
-    row: int
-    col: int
-
-
+from testing import get_position_ai  #AI LOGIC
 
 class Player(NamedTuple):
     icon:str
@@ -19,10 +15,9 @@ class Player(NamedTuple):
     score:int
     
 PLAYERS = (
-    Player(icon="X", color="green", val=1, score=0),
-    Player(icon="O", color="blue", val=2, score=0),
+    Player(icon="X", color="green", val=1, score=0),#PLAYER
+    Player(icon="O", color="blue", val=2, score=0), #AI
 )    
-
 
 class GameLogic:
     def __init__(self):
@@ -34,6 +29,7 @@ class GameLogic:
         self._player_score=0
         self._ai_score=0
         self._ai_difficulty=2
+
 
     def getAiMove(self): #returns AI's chosen position to move circle to
 
@@ -59,15 +55,14 @@ class GameLogic:
             for column in row:
                 print(column, end=" ")
             print()
-        
-
-
-        return x,y
+        return x,y #return position
     
+
     def togglePlayer(self):
         self._current_player = next(self._players)
         print("player " + self._current_player.icon + "   turn")
 
+    #check if game over and if it is se values
     def checkIfOver(self):
         user_won = False
         player = self._current_player.val
@@ -111,7 +106,7 @@ class GameLogic:
         
         return False
 
-    
+    #reset values and start game
     def startNextGame(self,widget): 
         #Reset values and start again    
         self._states=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]
@@ -144,10 +139,35 @@ class TTTBoard(tk.Tk):
         self._cells={}
         self._label_score={} #label with score
         self._new_game_btn={} #btn for starting new game
+        self._dropdown_var={}
+        self._dropdown()
         self._create_board()
         self._score()
         self._next_game()
         self._new_game_btn.pack_forget()
+
+    def get_selected_value(self):
+        selected_value = self._dropdown_var.get()
+        self._game_logic._ai_difficulty = int(selected_value)  
+        print("Set difficulty to " + selected_value)
+
+
+    def _dropdown(self):
+        frame = tk.Frame(master=self)
+        frame.pack()
+
+            # create the dropdown menu options
+        options = [1,2,3,4,5,6,7,8]
+
+        # create the dropdown menu
+        self._dropdown_var = tk.StringVar()
+        dropdown = ttk.Combobox(frame, textvariable=self._dropdown_var, values=options)
+        dropdown.current(2)
+        dropdown.pack()    
+        # create the button to get the selected value
+        button = tk.Button(frame, text="SET DIFFICULTY", command=lambda:self.get_selected_value())
+        button.pack()
+
 
     def _score(self):
         frame = tk.Frame(master=self) #games main window will be the frames parent    
@@ -231,10 +251,6 @@ class TTTBoard(tk.Tk):
                 #AI SELECTS MOVE    
             self.ai_play_game()
         
-            
-           
-
-
 
     def _play_click(self, event):
         btn = event.widget
@@ -254,7 +270,8 @@ class TTTBoard(tk.Tk):
                 print("game over!")
                 self._new_game_btn.pack()
 
-            if self._game_logic._current_player.val == 2 and self._game_logic._isOver==False:  #AI STARTS GAME
+            #AI STARTS GAME
+            if self._game_logic._current_player.val == 2 and self._game_logic._isOver==False:  
                 #AI SELECTS MOVE    
                 self.ai_play_game()
 

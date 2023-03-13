@@ -4,7 +4,6 @@ from typing import NamedTuple
 import copy
 
 
-
 def hevristika(state):   
  # H = (col + row + diag) for MAX  - (col + row + diag) for MIN
     # Max is AI Min is user
@@ -74,15 +73,6 @@ def hevristika(state):
 
 
 
-class stateRes(NamedTuple):
-    val: int
-    x:  int
-    y:  int
-
-
-
-
-
 def isStateFinished(state):
     for x in range(3):
         for y in range(3):
@@ -132,18 +122,18 @@ def minmax(s,d,player,alpha,beta):
 
 
     for i in range(3):
-        for j in range(3):
-            if newState[i][j] == 0:
+        for j in range(3): #try all options
+
+            if newState[i][j] == 0: 
                 
 
+                tmpState = copy.deepcopy(newState) #deep copy so original isnt changed 
 
-                tmpState = copy.deepcopy(newState) 
-
-                if player==True:
+                if player==True: #MAX
                     tmpState[i][j] = 1
-                else:
+                else:            #MIN   
                     tmpState[i][j] = 2
-                #gotOut = stateRes()
+   
                 outOcena,outX,outY = minmax(tmpState,d-1,not player,alpha,beta)
 
                 if(player ==True and outOcena > ocena) :
@@ -166,10 +156,7 @@ def minmax(s,d,player,alpha,beta):
                 if alpha >= beta:
                     return ocena,x,y
 
-                #print("hevr pr max in xy"+str(x)+str(y)+" " + str(val))
     return ocena,x,y
-
-  
 
 
 def get_position_ai(state,d):    
