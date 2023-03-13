@@ -3,60 +3,12 @@ from tkinter import *
 from itertools import cycle
 from tkinter import font
 from typing import NamedTuple
+import copy
+from testing import get_position_ai
 
 class Move(NamedTuple):
     row: int
     col: int
-
-
-def hevristika(state):
-
-    # H = (col + row + diag) for MAX  - (col + row + diag) for MIN
-    # Max is AI Min is PC
-    # MAX val=2
-    # MIN val=1  
-
-    maxRes=0
-    minRes=0
-
-    for i in range(3):
-            #Checks rows for Max
-            if state[i][0] in[2,0] and state[i][1] in[2,0] and state[i][2] in[2,0]:
-                maxRes+=1    
-            #Checks rows for Min
-            if state[i][0] in[1,0] and state[i][1] in[1,0] and state[i][2] in[1,0]:
-                minRes+=1    
-
-            #Checks columns for Max
-            if state[0][i] in[2,0] and state[1][i] in[2,0] and state[2][i] in[2,0]:
-                maxRes+=1    
-            #Checks columns for Min
-            if state[0][i] in[1,0] and state[1][i] in[1,0] and state[2][i] in[1,0]:
-                minRes+=1   
-
-    #check diagonals for Max
-    if state[0][0]in[2,0] and state[1][1]in[2,0] and state[2][2] in[2,0]:
-        maxRes+=1 
-    if state[0][2]in[2,0] and state[1][1]in[2,0] and state[2][0] in[2,0]:
-        maxRes+=1 
-
-    #check diagonals for Min
-    if state[0][0] in [1,0] and state[1][1] in [1,0] and state[2][2] in [1,0]:
-        minRes+=1 
-    if state[0][2] in [1,0] and state[1][1] in [1,0] and state[2][0] in [1,0]:
-        minRes+=1 
-
-    return  maxRes - minRes
-
-class AIPlayer():
-    def __init__(self):
-        self._difficulty=1
-    
-    def move(self,state):
-
-        print("AI MOVE!")
-
-        return 
 
 
 
@@ -81,9 +33,40 @@ class GameLogic:
         self._draw_score=0
         self._player_score=0
         self._ai_score=0
+        self._ai_difficulty=2
+
+    def getAiMove(self): #returns AI's chosen position to move circle to
+
+        newState=copy.deepcopy(self._states)
+
+        print("sending to ai: ")
+        for row in self._states:
+            for column in row:
+                print(column, end=" ")
+            print()
+
+        x,y = get_position_ai(newState,self._ai_difficulty)
+        
+        print("AI wants to play " + str(x) + str(y))
+        print("value at position is: " + str(self._states[x][y]) )    
+
+        
+        self._states[x][y]=2 #set value in states
+
+
+        print("After ai changed: ")
+        for row in self._states:
+            for column in row:
+                print(column, end=" ")
+            print()
+        
+
+
+        return x,y
     
     def togglePlayer(self):
         self._current_player = next(self._players)
+        print("player " + self._current_player.icon + "   turn")
 
     def checkIfOver(self):
         user_won = False
@@ -131,13 +114,13 @@ class GameLogic:
     
     def startNextGame(self,widget): 
         #Reset values and start again    
-        self._states = [ [0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        self._states=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
         self._isOver = False #Start again
 
         self.togglePlayer() #Next player starts
-        if self._current_player.val == 2:  #AI STARTS GAME
-            print("HERE AI starts")
+       
+
         #Hide Button
         widget.pack_forget()
 
@@ -154,11 +137,10 @@ class GameLogic:
 
         
 class TTTBoard(tk.Tk):
-    def __init__(self,game_logic,ai):
+    def __init__(self,game_logic):
         super().__init__()
         self.title("Tic tac toe minimax alfa/beta")
         self._game_logic=game_logic
-        self._ai=ai
         self._cells={}
         self._label_score={} #label with score
         self._new_game_btn={} #btn for starting new game
@@ -209,12 +191,50 @@ class TTTBoard(tk.Tk):
         btn.config(text=self._game_logic._current_player.icon)
         btn.config(fg=self._game_logic._current_player.color)
 
+
+    def ai_play_game(self):
+        #AI STARTS GAME
+        if self._game_logic._current_player.val == 2: 
+            x,y = self._game_logic.getAiMove()
+            
+            btn_to_update={}
+            #get btn from list
+            for btn in self._cells.keys():
+                row,col = self._cells[btn]
+                if row == x and col == y:
+                    btn_to_update = btn
+                    break
+            if  btn_to_update=={}:
+                print("error finding button to update")
+            else:
+                self._update_btn(btn_to_update) #update btn look
+
+            if self._game_logic.checkIfOver() == True:
+                print("Game!")
+                self._new_game_btn.pack()
+            else:
+                self._game_logic.togglePlayer()
+            #update label
+            self._label_score.config(text="User:%d   Tied:%d   Pc:%d" % (self._game_logic._player_score, self._game_logic._draw_score, self._game_logic._ai_score),)
+    
+
+
     def reset_values(self):
         #Reset values
         for btn in self._cells.keys():
             btn.config(text="") 
             
         self._game_logic.startNextGame(self._new_game_btn) #Start new game
+
+        #AI STARTS GAME
+        if self._game_logic._current_player.val == 2:   #AI STARTS GAME
+                #AI SELECTS MOVE    
+            self.ai_play_game()
+        
+            
+           
+
+
 
     def _play_click(self, event):
         btn = event.widget
@@ -231,17 +251,17 @@ class TTTBoard(tk.Tk):
 
             #Next game button show
             if self._game_logic._isOver: #if GAME FINISHED SHOW NEXT GAME BUTTON
+                print("game over!")
                 self._new_game_btn.pack()
-            elif self._game_logic_current_player.val == 2:  #AI STARTS GAME
-                
+
+            if self._game_logic._current_player.val == 2 and self._game_logic._isOver==False:  #AI STARTS GAME
                 #AI SELECTS MOVE    
-                self._ai.move() 
+                self.ai_play_game()
 
 
 def main():
     game=GameLogic() # Class for game logic
-    ai=AIPlayer() #Class for artificial intelligence
-    game_board=TTTBoard(game,ai)  #instantiating  GUI class
+    game_board=TTTBoard(game)  #instantiating  GUI class
     game_board.mainloop()   #the tkinter event loop -> listens to events, clicks...
 
 if __name__ == "__main__":

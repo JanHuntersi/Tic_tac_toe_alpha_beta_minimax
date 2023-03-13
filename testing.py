@@ -114,7 +114,7 @@ def isStateFinished(state):
     return True
 
 
-def minmax(s,d,player):
+def minmax(s,d,player,alpha,beta):
 
     newState=copy.deepcopy(s)
     
@@ -135,7 +135,7 @@ def minmax(s,d,player):
         for j in range(3):
             if newState[i][j] == 0:
                 
-                changedOne = newState[i][j]
+
 
                 tmpState = copy.deepcopy(newState) 
 
@@ -144,22 +144,44 @@ def minmax(s,d,player):
                 else:
                     tmpState[i][j] = 2
                 #gotOut = stateRes()
-                outOcena,outX,outY = minmax(tmpState,d-1,not player)
+                outOcena,outX,outY = minmax(tmpState,d-1,not player,alpha,beta)
 
-                if(player ==True and outOcena > ocena) or (player == False and outOcena < ocena):
+                if(player ==True and outOcena > ocena) :
+                
                     ocena=outOcena
                     x=i
                     y=j
+
+                    if ocena > alpha:
+                        alpha = ocena
+
+                elif  (player == False and outOcena < ocena):
+                    ocena=outOcena
+                    x=i
+                    y=j    
+
+                    if ocena < beta:
+                        beta = ocena
+
+                if alpha >= beta:
+                    return ocena,x,y
+
                 #print("hevr pr max in xy"+str(x)+str(y)+" " + str(val))
     return ocena,x,y
 
   
 
 
+def get_position_ai(state,d):    
+    state_copy= copy.deepcopy(state)
+    ocena,x,y = minmax(state_copy,d,False,-100,100)   
+    return x,y
+
+
 def main():
-    state=[[2,1,0],
-           [0,1,0],
-           [1,0,2]]
+    state=[[0,0,0],
+           [0,0,0],
+           [0,0,0]]
     
     print(hevristika(state))
 
@@ -168,7 +190,7 @@ def main():
    
     state_copy= copy.deepcopy(state)
 
-    ocena,x,y = minmax(state_copy,8,True)
+    ocena,x,y = minmax(state_copy,2,True,-100,100)
     print("Dobili smo " + str(ocena) + " " + str(x) + " " + str(y))
     #print(output)
    
